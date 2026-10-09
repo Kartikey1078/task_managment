@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import api, { getErrorMessage } from '../services/api';
+import api, { getErrorMessage, setCsrfToken } from '../services/api';
 import { dashboardPathForRole } from '../utils/roles';
 
 const AuthContext = createContext(null);
@@ -12,9 +12,12 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.get('/auth/me');
       setUser(data.data.user);
+      const csrf = await api.get('/auth/csrf');
+      setCsrfToken(csrf.data.data.csrfToken);
       return data.data.user;
     } catch {
       setUser(null);
+      setCsrfToken(null);
       return null;
     }
   }, []);
@@ -26,6 +29,7 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
     const loggedInUser = data.data.user;
+    setCsrfToken(data.data.csrfToken);
     setUser(loggedInUser);
     return loggedInUser;
   }, []);
@@ -34,6 +38,7 @@ export function AuthProvider({ children }) {
     try {
       await api.post('/auth/logout');
     } finally {
+      setCsrfToken(null);
       setUser(null);
     }
   }, []);

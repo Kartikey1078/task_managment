@@ -29,6 +29,7 @@ export default function UsersPage() {
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [deactivateUser, setDeactivateUser] = useState(null);
@@ -52,6 +53,7 @@ export default function UsersPage() {
     setLoading(true);
     const params = new URLSearchParams({ page, limit: 10 });
     if (search) params.set('search', search);
+    if (roleFilter) params.set('role', roleFilter);
     api
       .get(`/users?${params}`)
       .then((res) => {
@@ -59,7 +61,7 @@ export default function UsersPage() {
         setMeta(res.data.meta);
       })
       .finally(() => setLoading(false));
-  }, [page, search]);
+  }, [page, search, roleFilter]);
 
   useEffect(() => {
     load();
@@ -143,7 +145,23 @@ export default function UsersPage() {
         </form>
       )}
 
-      <SearchInput value={search} onChange={setSearch} placeholder="Search users…" />
+      <div className="flex flex-wrap gap-3">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search users…" />
+        <select
+          value={roleFilter}
+          onChange={(e) => {
+            setRoleFilter(e.target.value);
+            setPage(1);
+          }}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          aria-label="Filter by role"
+        >
+          <option value="">All roles</option>
+          <option value="admin">Admin</option>
+          <option value="manager">Manager</option>
+          <option value="user">User</option>
+        </select>
+      </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         {loading ? (

@@ -18,5 +18,6 @@ router.post(
 router.post('/logout', asyncHandler(authController.logout));
 
 router.get('/me', authenticate, asyncHandler(authController.me));
+router.get('/csrf', authenticate, asyncHandler(authController.csrf));
 
 export default router;

@@ -1,6 +1,13 @@
 import axios from 'axios';
 
+let csrfToken = null;
+
+export function setCsrfToken(token) {
+  csrfToken = token || null;
+}
+
 function getCsrfToken() {
+  if (csrfToken) return csrfToken;
   const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
   return match ? decodeURIComponent(match[1]) : null;
 }

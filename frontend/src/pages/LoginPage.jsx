@@ -44,7 +44,22 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold text-slate-900">Sign in</h1>
         <p className="mt-1 text-sm text-slate-500">RBAC Task Management System</p>
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
+        <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+          <p className="font-medium text-slate-800">Local demo accounts</p>
+          <ul className="mt-2 space-y-1">
+            <li>
+              <span className="font-medium">Admin:</span> admin@taskmgmt.local
+            </li>
+            <li>
+              <span className="font-medium">Manager:</span> manager@taskmgmt.local
+            </li>
+            <li>
+              <span className="font-medium">User:</span> user1@taskmgmt.local
+            </li>
+          </ul>
+          <p className="mt-2 text-slate-500">Password: see README (e.g. ChangeMe_Manager123!)</p>
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           <FormInput
             id="email"
             label="Email"
