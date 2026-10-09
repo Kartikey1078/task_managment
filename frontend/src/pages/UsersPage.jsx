@@ -77,16 +77,20 @@ export default function UsersPage() {
       .finally(() => setLoading(false));
   }, [page, search, roleFilter]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
+  const loadManagers = useCallback(() => {
     api
       .get('/users?role=manager&limit=50')
       .then((res) => setManagers(res.data.data ?? []))
       .catch(() => setManagers([]));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    loadManagers();
+  }, [loadManagers]);
 
   const parseManagerId = (role, managerIdRaw) => {
     if (role !== 'user') return null;
@@ -109,6 +113,9 @@ export default function UsersPage() {
       reset();
       setShowForm(false);
       load();
+      if (values.role === 'manager') {
+        loadManagers();
+      }
     } catch (err) {
       showToast(getErrorMessage(err), 'error');
     }
@@ -143,6 +150,9 @@ export default function UsersPage() {
       showToast('User updated');
       setEditingUser(null);
       load();
+      if (values.role === 'manager' || editingUser.role === 'manager') {
+        loadManagers();
+      }
     } catch (err) {
       showToast(getErrorMessage(err), 'error');
     }
@@ -153,6 +163,9 @@ export default function UsersPage() {
       await api.patch(`/users/${user.id}/status`, { is_active: active });
       showToast(active ? 'User activated' : 'User deactivated');
       load();
+      if (user.role === 'manager') {
+        loadManagers();
+      }
     } catch (err) {
       showToast(getErrorMessage(err), 'error');
     }
