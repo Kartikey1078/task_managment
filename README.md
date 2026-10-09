@@ -149,7 +149,8 @@ Never commit `.env` files or put DB secrets in the frontend.
 | Admin | `admin@taskmgmt.local` | `ChangeMe_Admin123!` |
 | Manager | `manager@taskmgmt.local` | `ChangeMe_Manager123!` |
 | User | `user1@taskmgmt.local` | `ChangeMe_User123!` |
-| User | `user2@taskmgmt.local` | `ChangeMe_User2123!` |
+
+Seed is minimal: three users, **no sample tasks** (create tasks manually for testing).
 
 **Do not use these credentials in production.**
 

@@ -62,17 +62,11 @@ export async function buildTaskScope(actor) {
     };
   }
   if (actor.role === 'manager') {
-    const team = await userRepository.getTeamMemberIds(actor.id);
-    const placeholders = team.map(() => '?').join(', ');
-    if (team.length === 0) {
-      return {
-        scopeSql: '(t.created_by = ?)',
-        scopeParams: [actor.id],
-      };
-    }
+    const teamIds = [...(await getManagerTeamIds(actor.id))];
+    const placeholders = teamIds.map(() => '?').join(', ');
     return {
       scopeSql: `(t.created_by = ? OR t.assigned_to IN (${placeholders}))`,
-      scopeParams: [actor.id, ...team],
+      scopeParams: [actor.id, ...teamIds],
     };
   }
   throw ApiError.forbidden();

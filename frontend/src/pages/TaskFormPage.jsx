@@ -36,9 +36,15 @@ export default function TaskFormPage() {
 
   useEffect(() => {
     if (user?.role === 'admin' || user?.role === 'manager') {
-      api.get('/users/assignees').then((res) => setAssignees(res.data.data));
+      api
+        .get('/users/assignees')
+        .then((res) => setAssignees(res.data.data ?? []))
+        .catch((err) => {
+          setAssignees([]);
+          showToast(getErrorMessage(err) || 'Could not load assignees', 'error');
+        });
     }
-  }, [user]);
+  }, [user, showToast]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -109,10 +115,10 @@ export default function TaskFormPage() {
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             {...register('assigned_to')}
           >
-            <option value="">Select user</option>
+            <option value="">Select assignee</option>
             {assignees.map((u) => (
               <option key={u.id} value={u.id}>
-                {u.name} ({u.email})
+                {u.name} · {u.role} ({u.email})
               </option>
             ))}
           </select>

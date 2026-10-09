@@ -31,8 +31,12 @@ export default function TaskListPage() {
     api
       .get(`/tasks?${params}`)
       .then((res) => {
-        setTasks(res.data.data);
+        setTasks(res.data.data ?? []);
         setMeta(res.data.meta);
+      })
+      .catch(() => {
+        setTasks([]);
+        setMeta(null);
       })
       .finally(() => setLoading(false));
   }, [page, search, status, priority]);
@@ -111,7 +115,7 @@ export default function TaskListPage() {
                         {task.title}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{task.assigned_to_name}</td>
+                    <td className="px-4 py-3">{task.assigned_to_name || '—'}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={task.status} />
                     </td>

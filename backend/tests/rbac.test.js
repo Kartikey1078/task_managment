@@ -86,6 +86,46 @@ describe('RBAC authorization', () => {
     expect(res.body.data.role).toBe('user');
   });
 
+  it('manager assignees list includes team member names', async () => {
+    const agent = newAgent();
+    const { csrf } = await login(
+      agent,
+      CREDENTIALS.manager.email,
+      CREDENTIALS.manager.password,
+    );
+    const res = await authed(agent, csrf).get('/api/users/assignees');
+    expect(res.status).toBe(200);
+    const names = res.body.data.map((u) => u.name);
+    expect(names).toContain('Bob User');
+  });
+
+  it('manager sees task assigned to them by admin', async () => {
+    const admin = newAgent();
+    const { csrf: adminCsrf } = await login(
+      admin,
+      CREDENTIALS.admin.email,
+      CREDENTIALS.admin.password,
+    );
+    const created = await authed(admin, adminCsrf).post('/api/tasks', {
+      title: `For manager ${Date.now()}`,
+      assigned_to: 2,
+      priority: 'medium',
+    });
+    expect(created.status).toBe(201);
+
+    const manager = newAgent();
+    const { csrf } = await login(
+      manager,
+      CREDENTIALS.manager.email,
+      CREDENTIALS.manager.password,
+    );
+    const list = await authed(manager, csrf).get('/api/tasks');
+    expect(list.status).toBe(200);
+    expect(list.body.data.some((t) => t.id === created.body.data.id)).toBe(true);
+
+    await authed(admin, adminCsrf).delete(`/api/tasks/${created.body.data.id}`);
+  });
+
   it('user cannot read another users assigned task', async () => {
     const admin = newAgent();
     const { csrf: adminCsrf } = await login(

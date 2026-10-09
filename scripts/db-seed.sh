@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Re-apply local seed (includes admin, manager, and users). Dev only.
+# Wipe and re-apply minimal local seed (1 admin, 1 manager, 1 user, no tasks). Dev only.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CONTAINER="${MYSQL_CONTAINER:-taskmgmt-mysql-test}"

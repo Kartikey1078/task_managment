@@ -120,7 +120,7 @@ export async function listAssigneesForManager(managerId) {
   const [rows] = await pool.execute(
     `SELECT id, name, email, role FROM users
      WHERE is_active = 1 AND (manager_id = ? OR id = ?)
-     ORDER BY name ASC`,
+     ORDER BY role ASC, name ASC`,
     [managerId, managerId],
   );
   return rows;

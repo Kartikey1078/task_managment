@@ -31,18 +31,27 @@ describe('Tasks API', () => {
   });
 
   it('user can patch status on own assigned task', async () => {
+    const admin = newAgent();
+    const { csrf: adminCsrf } = await login(
+      admin,
+      CREDENTIALS.admin.email,
+      CREDENTIALS.admin.password,
+    );
+    const created = await authed(admin, adminCsrf).post('/api/tasks', {
+      title: `User patch test ${Date.now()}`,
+      assigned_to: 3,
+      priority: 'medium',
+    });
+    expect(created.status).toBe(201);
+    const taskId = created.body.data.id;
+    const originalStatus = created.body.data.status;
+
     const agent = newAgent();
     const { csrf } = await login(
       agent,
       CREDENTIALS.user.email,
       CREDENTIALS.user.password,
     );
-    const list = await authed(agent, csrf).get('/api/tasks?limit=1');
-    expect(list.status).toBe(200);
-    const taskId = list.body.data[0]?.id;
-    expect(taskId).toBeTruthy();
-
-    const originalStatus = list.body.data[0].status;
     const nextStatus = originalStatus === 'pending' ? 'in_progress' : 'pending';
 
     const patch = await authed(agent, csrf).patch(`/api/tasks/${taskId}/status`, {
@@ -54,6 +63,8 @@ describe('Tasks API', () => {
     await authed(agent, csrf).patch(`/api/tasks/${taskId}/status`, {
       status: originalStatus,
     });
+
+    await authed(admin, adminCsrf).delete(`/api/tasks/${taskId}`);
   });
 
   it('validates invalid task payload', async () => {

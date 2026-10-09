@@ -15,12 +15,14 @@ const createSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   role: z.enum(['admin', 'manager', 'user']),
+  manager_id: z.string().optional(),
 });
 
 const updateSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   role: z.enum(['admin', 'manager', 'user']),
+  manager_id: z.string().optional(),
 });
 
 export default function UsersPage() {
@@ -34,20 +36,32 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [deactivateUser, setDeactivateUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
+  const [managers, setManagers] = useState([]);
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
     resolver: zodResolver(createSchema),
-    defaultValues: { role: 'user' },
+    defaultValues: { role: 'user', manager_id: '' },
   });
+
+  const createRole = watch('role');
 
   const {
     register: registerEdit,
     handleSubmit: handleEditSubmit,
     reset: resetEdit,
     formState: { errors: editErrors, isSubmitting: editSubmitting },
+    watch: watchEdit,
   } = useForm({
     resolver: zodResolver(updateSchema),
   });
+
+  const editRole = watchEdit('role');
 
   const load = useCallback(() => {
     setLoading(true);
@@ -67,9 +81,30 @@ export default function UsersPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    api
+      .get('/users?role=manager&limit=50')
+      .then((res) => setManagers(res.data.data ?? []))
+      .catch(() => setManagers([]));
+  }, []);
+
+  const parseManagerId = (role, managerIdRaw) => {
+    if (role !== 'user') return null;
+    if (!managerIdRaw) return null;
+    const id = Number(managerIdRaw);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  };
+
   const onCreate = async (values) => {
     try {
-      await api.post('/users', values);
+      const body = {
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        role: values.role,
+        manager_id: parseManagerId(values.role, values.manager_id),
+      };
+      await api.post('/users', body);
       showToast('User created');
       reset();
       setShowForm(false);
@@ -85,13 +120,26 @@ export default function UsersPage() {
       name: user.name,
       email: user.email,
       role: user.role,
+      manager_id: user.manager_id ? String(user.manager_id) : '',
     });
+  };
+
+  const managerName = (managerId) => {
+    if (!managerId) return '—';
+    const m = managers.find((x) => x.id === managerId);
+    return m ? m.name : `#${managerId}`;
   };
 
   const onUpdate = async (values) => {
     if (!editingUser) return;
     try {
-      await api.put(`/users/${editingUser.id}`, values);
+      const body = {
+        name: values.name,
+        email: values.email,
+        role: values.role,
+        manager_id: parseManagerId(values.role, values.manager_id),
+      };
+      await api.put(`/users/${editingUser.id}`, body);
       showToast('User updated');
       setEditingUser(null);
       load();
@@ -139,6 +187,22 @@ export default function UsersPage() {
               <option value="admin">Admin</option>
             </select>
           </div>
+          {createRole === 'user' && (
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-sm font-medium">Manager</label>
+              <select
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                {...register('manager_id')}
+              >
+                <option value="">No manager</option>
+                {managers.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <button type="submit" disabled={isSubmitting} className="md:col-span-2 rounded-lg bg-brand-700 py-2 text-sm text-white">
             Create user
           </button>
@@ -173,6 +237,7 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Email</th>
                 <th className="px-4 py-3 text-left">Role</th>
+                <th className="px-4 py-3 text-left">Manager</th>
                 <th className="px-4 py-3 text-left">Status</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -183,6 +248,7 @@ export default function UsersPage() {
                   <td className="px-4 py-3 font-medium">{u.name}</td>
                   <td className="px-4 py-3">{u.email}</td>
                   <td className="px-4 py-3 capitalize">{u.role}</td>
+                  <td className="px-4 py-3">{managerName(u.manager_id)}</td>
                   <td className="px-4 py-3">{u.is_active ? 'Active' : 'Inactive'}</td>
                   <td className="px-4 py-3 text-right space-x-3">
                     <button
@@ -235,6 +301,22 @@ export default function UsersPage() {
                 <option value="admin">Admin</option>
               </select>
             </div>
+            {editRole === 'user' && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Manager</label>
+                <select
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                  {...registerEdit('manager_id')}
+                >
+                  <option value="">No manager</option>
+                  {managers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
